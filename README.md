@@ -1,7 +1,11 @@
-# biosample_metadata
+# Get Metadata for Biosamples
 This tool supports extracting BioSample metadata into a user friendly table. It assumes you will provide a list of valid BioSamples and will write out a table.
 
 If an existing table is provided it will be used to update that table with additional columns as present in the collection of samples provided or added to.
+
+# Requirements
+
+* [Biopython])(http://biopython.org)
 
 # Usage
 
