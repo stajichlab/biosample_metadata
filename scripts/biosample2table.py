@@ -61,7 +61,7 @@ query = set()
 header_set = set()
 
 if args.output != "-":
-    if re.match(r'\.(csv|CSV)$',args.output):
+    if re.search(r'\.(csv|CSV)$',args.output):
         separator = ","
     if os.path.exists(args.output):
         with open(args.output,"rt") as fh:
@@ -162,11 +162,12 @@ for sampid in sampidquery:
 with open(args.output, 'wt') as outfh:
     outcsv = csv.writer(outfh, delimiter=separator)
     outheader = ['BioSample']
-    outheader.extend(sorted(header_set))
+    sorted_header_set = sorted(header_set)
+    outheader.extend(sorted_header_set)
     outcsv.writerow(outheader)
     for sample in sorted(biosamples):
         outrow = [sample]
-        for h in header_set:
+        for h in sorted_header_set:
             if h in biosamples[sample]:
                 outrow.append(biosamples[sample][h])
             else:
