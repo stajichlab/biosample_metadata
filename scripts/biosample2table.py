@@ -87,6 +87,8 @@ if args.sample:
     for r in args.sample:
         query.add(r)
 
+sampid2sra = {}
+
 if args.sra:
     newquery = set()
     for sraid in query:
@@ -102,7 +104,10 @@ if args.sra:
                 if args.debug:
                     print("SRA BioSample Accession is {}".format(sd.attrib["accession"]))
                 newquery.add(sd.attrib["accession"])
-
+                if args.debug:
+                    print("{} => {}".format(sd.attrib["accession"],sraid))
+                sampid2sra[sd.attrib["accession"]] = sraid
+                sampid2sra[ sraid ] = sd.attrib["accession"]
 #            for identifier in sd:
 #                if identifier
 #                for extid in identifier:
@@ -114,6 +119,7 @@ if args.sra:
 
 sampmatch = re.compile(r'SAM[A-Z](\d+)')
 sampidquery = set()
+biosamp2sra = {}
 for qname in query:
     if args.debug:
         print("query is {}".format(qname))
@@ -131,6 +137,8 @@ for qname in query:
                 indent(id)
                 ET.dump(id)
             if id.tag == "Id":
+                if qname in sampid2sra:
+                    biosamp2sra[ id.text ] = sampid2sra[qname]
                 sampidquery.add(id.text)
 
 for sampid in sampidquery:
@@ -146,6 +154,11 @@ for sampid in sampidquery:
         BIOSAMPLE = sample.attrib['accession']
         if BIOSAMPLE not in biosamples:
             biosamples[BIOSAMPLE] = {}
+        if sampid in biosamp2sra:
+            biosamples[BIOSAMPLE]['SRA_Run'] = biosamp2sra[sampid]
+            biosamples[BIOSAMPLE]['SRA_SampID'] = sampid2sra [ biosamp2sra[sampid] ]
+            header_set.add('SRA_Run')
+            header_set.add('SRA_SampID')
         for attributes in root.iter('Attributes'): # sample to root?
             for metadata in attributes:
                 keyname = metadata.attrib['attribute_name']
