@@ -38,11 +38,16 @@ parser.add_argument('-s', '--sample', metavar=('samples'), required = False, nar
 
 parser.add_argument('-e', '--email', required = True,
                     help='Input your email address for Entrez queries')
-parser.add_argument('-u', '--update', required = False,
+
+parser.add_argument('-u', '--update', required = False, action='store_true',
                     help='Input sample names as list')
 
-parser.add_argument('--sra', required = False,
+parser.add_argument('--sra', required = False, action='store_true',
                     help='Sample names are SRR IDs not BioSamples')
+
+
+parser.add_argument('--debug', required = False, action='store_true',
+                    help='Debug this running')
 
 
 args = parser.parse_args()
@@ -62,7 +67,7 @@ if args.output != "-":
         with open(args.output,"rt") as fh:
             csvin = csv.reader(fh,delimiter=separator)
             header = next(csvin)
-            for h in header:
+            for h in header[1:]:
                 header_set.add(h)
             for row in csvin:
                 sampleid = row[0]
@@ -82,21 +87,66 @@ if args.sample:
     for r in args.sample:
         query.add(r)
 
-sampmatch = re.compile(r'SAMN(\d+)')
-for sampid in query:
-    qname = sampid
-    m = sampmatch.match(sampid)
-    if m:
-        qname = m.group(1)
-    handle = Entrez.efetch(db="biosample", id=qname)
+if args.sra:
+    newquery = set()
+    for sraid in query:
+        handle = Entrez.efetch(db="sra", id=sraid)
+        tree = ET.parse(handle)
+        root = tree.getroot()
+
+        for sd in root.iter('SAMPLE'):
+            if args.debug:
+                indent(sd)
+                ET.dump(sd)
+            if "accession" in sd.attrib:
+                if args.debug:
+                    print("SRA BioSample Accession is {}".format(sd.attrib["accession"]))
+                newquery.add(sd.attrib["accession"])
+
+#            for identifier in sd:
+#                if identifier
+#                for extid in identifier:
+#                    if (extid.tag == "EXTERNAL_ID" and
+#                        "namespace" in extid.attrib and
+#                        extid.attrib["namespace"].lower() == "biosample"):
+#                        newquery.add(extid.text)
+    query = newquery # update the query set with this
+
+sampmatch = re.compile(r'SAM[A-Z](\d+)')
+sampidquery = set()
+for qname in query:
+    if args.debug:
+        print("query is {}".format(qname))
+    handle = Entrez.esearch(db="biosample", term=qname)
     tree = ET.parse(handle)
     root = tree.getroot()
+    if args.debug:
+        indent(root)
+        ET.dump(root)
 
+    for idlist in root.iter("IdList"):
+        for id in idlist:
+            if args.debug:
+                print("ID found {}",format(id))
+                indent(id)
+                ET.dump(id)
+            if id.tag == "Id":
+                sampidquery.add(id.text)
+
+for sampid in sampidquery:
+    handle = Entrez.efetch(db="biosample", id=sampid)
+    if args.debug:
+        print("sampid is {}".format(sampid))
+    tree = ET.parse(handle)
+    root = tree.getroot()
     for sample in root:
+        if args.debug:
+            indent(sample)
+            ET.dump(sample)
         BIOSAMPLE = sample.attrib['accession']
         if BIOSAMPLE not in biosamples:
             biosamples[BIOSAMPLE] = {}
-        for attributes in root.iter('Attributes'):
+        for attributes in root.iter('Attributes'): # sample to root?
             for metadata in attributes:
                 keyname = metadata.attrib['attribute_name']
                 if 'harmonized_name' in metadata.attrib:
