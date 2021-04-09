@@ -9,28 +9,51 @@ If an existing table is provided it will be used to update that table with addit
 biosample2table.py [ --in sample_list.txt] [--sample sampleid sampleid2 ...] --out result_table.tsv [--update]
 ```
 
-## Retrieve a biosample
+## Retrieve a single biosample
 
 Lookup a single Biosample and output tab delimited file
 ```
 ./scripts/biosample2table.py -s SAMN12327137 --out result_table.tsv -e yourname@gmail.com
 ```
 
-Output comma delimited file
+Results will be
 ```
-./scripts/biosample2table.py -s SAMN12327137 --out result_table.tsv -e yourname@gmail.com
+BioSample	collection_date	geo_loc_name	host	isolate	sample_type	strain
+SAMN12327137	2006	USA:Sierra Nevada Mtns	Rana sierrae	Bd_JAM81	isolate	GPL
 ```
 
-Lookup a single SRA record and find its BioSample
+## Output comma delimited file
+```
+./scripts/biosample2table.py -s SAMN12327137 --out result_table.csv -e yourname@gmail.com
+```
+BioSample,collection_date,geo_loc_name,host,isolate,sample_type,strain
+SAMN12327137,2006,USA:Sierra Nevada Mtns,Rana sierrae,Bd_JAM81,isolate,GPL
 
+## Lookup a single SRA record and find its BioSample
 ```
-./scripts/biosample2table.py -s SAMN12327137 --sra --out result_table.tsv -e yourname@gmail.com
+./scripts/biosample2table.py -s SRR14174621 --sra --out result_table.tsv -e yourname@gmail.com
 ```
+
 Results will be
 ```
 BioSample,SRA_Run,SRA_SampID,Sample No.,age,biomaterial_provider,isolate,sex,tissue,treatment
 SAMN18650164,SRR14174621,SRS8658905,17,54,Liverpool Hospital,Diabetic Patient,male,Skin,Midpoint
 ```
+
+## Lookup list of IDs from a single filename
+
+If you have a list of IDs either SRA or BioSample you can use the '--in' option
+
+```
+./scripts/biosample2table.py --in samplefile.txt --out result_table.tsv -e yourname@gmail.com
+```
+
+If you had a list of ids you wanted to pass from another program:
+
+```
+echo SAMN18650164 | ./scripts/biosample2table.py --in - --out result_table.tsv -e yourname@gmail.com
+```
+
 # Command line arguments
 
 | Argument | Description |
