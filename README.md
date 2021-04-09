@@ -42,7 +42,7 @@ SAMN18650164,SRR14174621,SRS8658905,17,54,Liverpool Hospital,Diabetic Patient,ma
 
 ## Lookup list of IDs from a single filename
 
-If you have a list of IDs either SRA or BioSample you can use the '--in' option
+If you have a list of IDs either SRA or BioSample you can use the `--in` option
 
 ```
 ./scripts/biosample2table.py --in samplefile.txt --out result_table.tsv -e yourname@gmail.com
@@ -63,7 +63,7 @@ echo SAMN18650164 | ./scripts/biosample2table.py -e yourname@gmail.com
 ```
 
 
-Mixing --in (or STDIN with no --in) and the -s will default to using the input provided by the -s option and ignore any stdin or `--in` file input.
+Mixing `--in` (or STDIN with no `--in`) and the `-s` will prefer sample list input provided by the `-s` option and ignore any stdin or `--in` file input.
 
 ```
 echo SAMN18650164 | ./scripts/biosample2table.py -e yourname@gmail.com
