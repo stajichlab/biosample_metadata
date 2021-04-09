@@ -48,10 +48,25 @@ If you have a list of IDs either SRA or BioSample you can use the '--in' option
 ./scripts/biosample2table.py --in samplefile.txt --out result_table.tsv -e yourname@gmail.com
 ```
 
-If you had a list of ids you wanted to pass from another program:
+# Using STDIN and STDOUT
+
+If you had a list of ids you wanted to pass from another program uyou can pass that in and omit the `--in` option
 
 ```
-echo SAMN18650164 | ./scripts/biosample2table.py --in - --out result_table.tsv -e yourname@gmail.com
+echo SAMN18650164 | ./scripts/biosample2table.py --out result_table.tsv -e yourname@gmail.com
+```
+
+Omitting the `--out` option will print the results out to STDOUT
+
+```
+echo SAMN18650164 | ./scripts/biosample2table.py -e yourname@gmail.com
+```
+
+
+Mixing --in (or STDIN with no --in) and the -s will default to using the input provided by the -s option and ignore any stdin or `--in` file input.
+
+```
+echo SAMN18650164 | ./scripts/biosample2table.py -e yourname@gmail.com
 ```
 
 # Command line arguments
@@ -65,4 +80,5 @@ echo SAMN18650164 | ./scripts/biosample2table.py --in - --out result_table.tsv -
 | --sra | Instead of BioSamples input IDs are SRR numbers |
 
 # Author(s)
+
 Jason Stajich - jason.stajich[at]ucr.edu, http://lab.stajich.org
