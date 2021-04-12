@@ -5,7 +5,7 @@ If an existing table is provided it will be used to update that table with addit
 
 # Requirements
 
-* [Biopython])(http://biopython.org)
+* [Biopython](http://biopython.org)
 
 # Usage
 
