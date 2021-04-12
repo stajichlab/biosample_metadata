@@ -59,7 +59,7 @@ biosamples = {}
 separator = "\t"
 query = set()
 header_set = set()
-
+seenSRR = set()
 if args.output:
     if re.search(r'\.(csv|CSV)$',args.output):
         separator = ","
@@ -75,6 +75,8 @@ if args.output:
                 # skip column 1 since it is the ID column
                 for i in range(1,len(header)):
                     biosamples[sampleid][header[i]] = row[i]
+                    if header[i] == "SRA_Run":
+                        seenSRR.add(row[i])
 
 #  input list of sample ids can be either
 # from -s samplelist
@@ -82,12 +84,15 @@ if args.output:
 # or by stdin
 if args.sample:
     for r in args.sample:
-        query.add(r)
+        if args.update or not (r in biosamples or r in seenSRR):
+            query.add(r)
 else:
     with open(args.input, 'rt') if args.input else sys.stdin as fh:
         for line in fh:
             line = line.strip()
-            query.add(line)
+            if args.update or not (line in biosamples or line in seenSRR):
+                print("adding line {}".format(line))
+                query.add(line)
 
 
 sampid2sra = {}
@@ -96,6 +101,9 @@ sampid2sra = {}
 if args.sra:
     newquery = set()
     for sraid in query:
+        if sraid.startswith("SAM"):
+            print("skipping {} as it looks like a biosample, are you sure you meant to use --sra".format(sraid))
+            continue
         handle = Entrez.efetch(db="sra", id=sraid)
         tree = ET.parse(handle)
         root = tree.getroot()
@@ -123,6 +131,11 @@ biosamp2sra = {}
 for qname in query:
     if args.debug:
         print("query is {}".format(qname))
+    m = re.match(r'^(SAM|[SED]RS)',qname)
+    if not m:
+        print("query is {} and looks like it isn't a biosample, did you forget to specify --sra".format(qname))
+        continue
+
     handle = Entrez.esearch(db="biosample", term=qname)
     tree = ET.parse(handle)
     root = tree.getroot()
