@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import os, re, csv, sys
+import os
+import re
+import csv
+import sys
 import argparse
 
 from Bio import Entrez
@@ -7,6 +10,7 @@ import xml.etree.ElementTree as ET
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
+
 
 def indent(elem, level=0):
     i = "\n" + level*"  "
@@ -28,25 +32,30 @@ def indent(elem, level=0):
 
 parser = argparse.ArgumentParser(description='Extract BioSample metadata from NCBI Entrez.')
 
-parser.add_argument('-o', '--output', metavar=("out"), required = False,
-                    help='Output table presenting lookup results, if file already exists will update the file or append with new samples')
-parser.add_argument('-i', '--input', metavar=("in"),required = False,
+parser.add_argument('-o', '--output', metavar=("out"), required=False,
+                    help='Output table presenting lookup results' +
+                    ' if file already exists will update the file' +
+                    ' or append with new samples')
+parser.add_argument('-i', '--input', metavar=("in"), required=False,
                     help='Input file of sample names')
 
-parser.add_argument('-s', '--sample', metavar=('samples'), required = False, nargs='+',
+parser.add_argument('-s', '--sample', metavar=('samples'),
+                    required=False, nargs='+',
                     help='Input file of sample names')
 
-parser.add_argument('-e', '--email', required = True,
+parser.add_argument('--showsra',  required=False, action='store_true',
+                    help='Provide SRA run accessions')
+
+parser.add_argument('-e', '--email', required=True,
                     help='Input your email address for Entrez queries')
 
-parser.add_argument('-u', '--update', required = False, action='store_true',
+parser.add_argument('-u', '--update', required=False, action='store_true',
                     help='Input sample names as list')
 
-parser.add_argument('--sra', required = False, action='store_true',
+parser.add_argument('--sra', required=False, action='store_true',
                     help='Sample names are SRR IDs not BioSamples')
 
-
-parser.add_argument('--debug', required = False, action='store_true',
+parser.add_argument('--debug', required=False, action='store_true',
                     help='Debug this running')
 
 
@@ -61,11 +70,11 @@ query = set()
 header_set = set()
 seenSRR = set()
 if args.output:
-    if re.search(r'\.(csv|CSV)$',args.output):
+    if re.search(r'\.(csv|CSV)$', args.output):
         separator = ","
     if os.path.exists(args.output):
-        with open(args.output,"rt") as fh:
-            csvin = csv.reader(fh,delimiter=separator)
+        with open(args.output, "rt") as fh:
+            csvin = csv.reader(fh, delimiter=separator)
             header = next(csvin)
             for h in header[1:]:
                 header_set.add(h)
@@ -73,7 +82,7 @@ if args.output:
                 sampleid = row[0]
                 biosamples[sampleid] = {}
                 # skip column 1 since it is the ID column
-                for i in range(1,len(header)):
+                for i in range(1, len(header)):
                     biosamples[sampleid][header[i]] = row[i]
                     if header[i] == "SRA_Run":
                         seenSRR.add(row[i])
@@ -97,12 +106,13 @@ else:
 
 sampid2sra = {}
 
-# if the sra parameter is set then we need to convert these IDs to BioSample IDs
+# if the sra parameter is set we need to convert these IDs to BioSample IDs
 if args.sra:
     newquery = set()
     for sraid in query:
         if sraid.startswith("SAM"):
-            print("skipping {} as it looks like a biosample, are you sure you meant to use --sra".format(sraid))
+            print(f"skipping {sraid} as it looks like a biosample, " +
+                  "are you sure you meant to use --sra")
             continue
         handle = Entrez.efetch(db="sra", id=sraid)
         tree = ET.parse(handle)
@@ -114,13 +124,13 @@ if args.sra:
                 ET.dump(sd)
             if "accession" in sd.attrib:
                 if args.debug:
-                    print("SRA BioSample Accession is {}".format(sd.attrib["accession"]))
+                    print(f'SRA BioSample Accession:{sd.attrib["accession"]}')
                 newquery.add(sd.attrib["accession"])
                 if args.debug:
-                    print("{} => {}".format(sd.attrib["accession"],sraid))
+                    print(f'{sd.attrib["accession"]} => {sraid}')
                 sampid2sra[sd.attrib["accession"]] = sraid
-                sampid2sra[ sraid ] = sd.attrib["accession"]
-    query = newquery # update the query set with this
+                sampid2sra[sraid] = sd.attrib["accession"]
+    query = newquery  # update the query set with this
 
 # we need to convert SAMNXXX to internal IDs for biosamples that NCBI uses
 # requires using esearch
@@ -131,9 +141,9 @@ biosamp2sra = {}
 for qname in query:
     if args.debug:
         print("query is {}".format(qname))
-    m = re.match(r'^(SAM|[SED]RS)',qname)
+    m = re.match(r'^(SAM|[SED]RS)', qname)
     if not m:
-        print("query is {} and looks like it isn't a biosample, did you forget to specify --sra".format(qname))
+        print(f"query is {qname} and looks like it isn't a biosample, did you forget to specify --sra")
         continue
 
     handle = Entrez.esearch(db="biosample", term=qname)
@@ -146,12 +156,14 @@ for qname in query:
     for idlist in root.iter("IdList"):
         for id in idlist:
             if args.debug:
-                print("ID found {}",format(id))
+                print("ID found {}", format(id))
                 indent(id)
                 ET.dump(id)
             if id.tag == "Id":
                 if qname in sampid2sra:
-                    biosamp2sra[ id.text ] = sampid2sra[qname]
+                    biosamp2sra[id.text] = sampid2sra[qname]
+                else:
+                    print(f"need to lookup SRA(s) for biosample {qname}")
                 sampidquery.add(id.text)
 # now query internal NCBI sampid values with efetch
 # and get back all the metadata columns
@@ -171,10 +183,10 @@ for sampid in sampidquery:
             biosamples[BIOSAMPLE] = {}
         if sampid in biosamp2sra:
             biosamples[BIOSAMPLE]['SRA_Run'] = biosamp2sra[sampid]
-            biosamples[BIOSAMPLE]['SRA_SampID'] = sampid2sra [ biosamp2sra[sampid] ]
+            biosamples[BIOSAMPLE]['SRA_SampID'] = sampid2sra[biosamp2sra[sampid]]
             header_set.add('SRA_Run')
             header_set.add('SRA_SampID')
-        for attributes in root.iter('Attributes'): # sample to root?
+        for attributes in root.iter('Attributes'):  # sample to root?
             for metadata in attributes:
                 keyname = metadata.attrib['attribute_name']
                 if 'harmonized_name' in metadata.attrib:
@@ -182,7 +194,7 @@ for sampid in sampidquery:
                 header_set.add(keyname)
                 biosamples[BIOSAMPLE][keyname] = metadata.text
 
-with open(args.output,"wt") if args.output else sys.stdout as outfh:
+with open(args.output, "wt") if args.output else sys.stdout as outfh:
     outcsv = csv.writer(outfh, delimiter=separator)
     outheader = ['BioSample']
     sorted_header_set = sorted(header_set)
