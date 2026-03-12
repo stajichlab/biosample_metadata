@@ -83,6 +83,81 @@ echo SAMN18650164 | ./scripts/biosample2table.py -e yourname@gmail.com
 | -s/--sample | List of samples to query instead of providing as input file |
 | --sra | Instead of BioSamples input IDs are SRR numbers |
 
+# Assembly Accession to Metadata (`assembly2metadata.py`)
+
+`scripts/assembly2metadata.py` fetches BioSample metadata for NCBI Assembly accessions
+(GCA_* or GCF_*). Each assembly is resolved to its linked BioSample via Entrez, then the
+full metadata is retrieved and written to a table.
+
+## Usage
+
+```
+assembly2metadata.py -e your@email.com [-i assemblies.txt] [-s GCA_... GCF_...] [-o output.tsv] [--update]
+```
+
+## Retrieve metadata for a single assembly
+
+```
+./scripts/assembly2metadata.py -s GCA_000001405.15 -o result_table.tsv -e yourname@gmail.com
+```
+
+Results will be a tab-delimited table with `assembly_accession` as the first column,
+`biosample_accession` as the second, followed by all BioSample attribute fields:
+
+```
+assembly_accession	biosample_accession	collection_date	geo_loc_name	...
+GCA_000001405.15	SAMN02981236	...	...	...
+```
+
+## Retrieve metadata for multiple assemblies
+
+```
+./scripts/assembly2metadata.py -s GCA_000001405.15 GCF_000001635.27 -o result_table.tsv -e yourname@gmail.com
+```
+
+## Retrieve from a file list
+
+One assembly accession per line:
+
+```
+./scripts/assembly2metadata.py -i assemblies.txt -o result_table.tsv -e yourname@gmail.com
+```
+
+## Output comma-delimited file
+
+Use a `.csv` extension to switch to comma-delimited output:
+
+```
+./scripts/assembly2metadata.py -s GCA_000001405.15 -o result_table.csv -e yourname@gmail.com
+```
+
+## Update existing results
+
+Re-query assemblies already present in the output file:
+
+```
+./scripts/assembly2metadata.py -i assemblies.txt -o result_table.tsv -e yourname@gmail.com --update
+```
+
+## Using STDIN and STDOUT
+
+```
+echo GCA_000001405.15 | ./scripts/assembly2metadata.py -e yourname@gmail.com
+```
+
+Omitting `-o` writes results to stdout.
+
+## Command line arguments
+
+| Argument | Description |
+| --------- | -------- |
+| -e/--email | Required. Email address for NCBI Entrez queries. |
+| -o/--output | Output file (.tsv or .csv). If the file already exists, existing records are reused and new ones are appended. Omit to write to stdout. |
+| -i/--input | Input file of assembly accessions, one per line. Omit to read from stdin. |
+| -s/--assemblies | One or more assembly accessions on the command line. |
+| --update | Re-query accessions already present in the output file. |
+| --debug | Print verbose debug information to stderr. |
+
 # Author(s)
 
 Jason Stajich - jason.stajich[at]ucr.edu, http://lab.stajich.org
