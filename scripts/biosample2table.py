@@ -7,9 +7,6 @@ import argparse
 
 from Bio import Entrez
 import xml.etree.ElementTree as ET
-import pprint
-
-pp = pprint.PrettyPrinter(indent=4)
 
 
 def indent(elem, level=0):
@@ -100,7 +97,8 @@ else:
         for line in fh:
             line = line.strip()
             if args.update or not (line in biosamples or line in seenSRR):
-                print("adding line {}".format(line))
+                if args.debug:
+                    print("adding line {}".format(line))
                 query.add(line)
 
 
